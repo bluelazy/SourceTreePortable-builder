@@ -39,6 +39,7 @@ SetOutPath "$INSTDIR\\7zTemp"
 File "\${NSISDIR}\\..\\7zip\\7z.exe"
 File "\${NSISDIR}\\..\\7zip\\7z.dll"
 SetOutPath $INSTDIR
+CreateDirectory "$INSTDIR\\Data"
 
 inetc::get /CONNECTTIMEOUT 30 /NOCOOKIES /TRANSLATE "Downloading SourceTree..." "Connecting..." second minute hour s "%dkB (%d%%) of %dkB @ %d.%01dkB/s" " (%d %s%s remaining)" "https://product-downloads.atlassian.com/software/sourcetree/windows/ga/SourceTreeSetup-${_ini.Version.DisplayVersion}.exe" "$INSTDIR\\7zTemp\\SourceTreeSetup-${_ini.Version.DisplayVersion}.exe" /END
 
@@ -46,6 +47,7 @@ inetc::get /CONNECTTIMEOUT 30 /NOCOOKIES /TRANSLATE "Downloading SourceTree..." 
 ExecDOS::exec \`"$INSTDIR\\7zTemp\\7z.exe" e "$INSTDIR\\7zTemp\\SourceTreeSetup-${_ini.Version.DisplayVersion}.exe" "SourceTree-${_ini.Version.DisplayVersion}-full.nupkg" -o"$INSTDIR\\7zTemp"\` "" ""
 ExecDOS::exec \`"$INSTDIR\\7zTemp\\7z.exe" x "$INSTDIR\\7zTemp\\SourceTree-${_ini.Version.DisplayVersion}-full.nupkg" "lib\\net45" -o"$INSTDIR\\7zTemp"\` "" ""
 ExecDOS::exec \`xcopy "$INSTDIR\\7zTemp\\lib\\net45" "$INSTDIR\\App\\SourceTree" /S /i\` "" ""
+ExecDOS::exec \`xcopy "$INSTDIR\\App\\DefaultData\\user.config" "$INSTDIR\\Data" /S /i\` "" ""
 
 ; Cleanup
 RMDir /r "$INSTDIR\\7zTemp"
