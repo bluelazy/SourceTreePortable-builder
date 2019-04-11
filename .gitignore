@@ -45,10 +45,23 @@ bin/*.d.ts
 /packages/**/node_modules
 
 *.tgz
-/tsconfig.json.tpl
 
 yarn-error.log
 
 /*.log
 .git
 /SourceTreePortable/App/SourceTree/
+/SourceTreePortable/Data/*
+!/SourceTreePortable/Data/.gitkeep
+!/SourceTreePortable/Data/desktop.ini
+!/SourceTreePortable/Data/ShedkoFolderico4_99625065.ico
+
+/releases/SourceTreePortable/App/SourceTree/
+/releases/SourceTreePortable/Data/*
+!/releases/SourceTreePortable/Data/.gitkeep
+!/releases/SourceTreePortable/Data/desktop.ini
+!/releases/SourceTreePortable/Data/ShedkoFolderico4_99625065.ico
+
+/yarn.lock
+/script/*.d.ts
+/releases/SourceTreePortable/

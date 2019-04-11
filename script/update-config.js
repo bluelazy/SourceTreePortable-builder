@@ -1,0 +1,47 @@
+"use strict";
+/**
+ * Created by user on 2019/4/12.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs = require("fs-extra");
+const path = require("path");
+const packageJson = require("../package.json");
+const index_1 = require("../index");
+const debug_color2_1 = require("debug-color2");
+const ini = require("ini");
+(async () => {
+    const version = packageJson.config.version;
+    let _path = path.join(index_1.__root_SourceTreePortable, 'App', 'AppInfo', 'appinfo.ini');
+    let _ini = await fs.readFile(_path, 'utf-8').then(ini.parse);
+    _ini.Version.PackageVersion = version;
+    _ini.Version.DisplayVersion = version.split('.').slice(0, 3).join('.');
+    // @ts-ignore
+    debug_color2_1.console.dir(_ini.Version);
+    await fs.writeFile(_path, ini.stringify(_ini));
+    let _nsh_context = `
+!macro CustomCodePostInstall
+
+; Prepare folder to extract with 7zip
+CreateDirectory "$INSTDIR\\7zTemp"
+SetOutPath "$INSTDIR\\7zTemp"
+File "\${NSISDIR}\\..\\7zip\\7z.exe"
+File "\${NSISDIR}\\..\\7zip\\7z.dll"
+SetOutPath $INSTDIR
+
+inetc::get /CONNECTTIMEOUT 30 /NOCOOKIES /TRANSLATE "Downloading SourceTree..." "Connecting..." second minute hour s "%dkB (%d%%) of %dkB @ %d.%01dkB/s" " (%d %s%s remaining)" "https://product-downloads.atlassian.com/software/sourcetree/windows/ga/SourceTreeSetup-${_ini.Version.DisplayVersion}.exe" "$INSTDIR\\7zTemp\\SourceTreeSetup-${_ini.Version.DisplayVersion}.exe" /END
+
+; Extract
+ExecDOS::exec \`"$INSTDIR\\7zTemp\\7z.exe" e "$INSTDIR\\7zTemp\\SourceTreeSetup-${_ini.Version.DisplayVersion}.exe" "SourceTree-${_ini.Version.DisplayVersion}-full.nupkg" -o"$INSTDIR\\7zTemp"\` "" ""
+ExecDOS::exec \`"$INSTDIR\\7zTemp\\7z.exe" x "$INSTDIR\\7zTemp\\SourceTree-${_ini.Version.DisplayVersion}-full.nupkg" "lib\\net45" -o"$INSTDIR\\7zTemp"\` "" ""
+ExecDOS::exec \`xcopy "$INSTDIR\\7zTemp\\lib\\net45" "$INSTDIR\\App\\SourceTree" /S /i\` "" ""
+
+; Cleanup
+RMDir /r "$INSTDIR\\7zTemp"
+
+!macroend
+
+`;
+    await fs.writeFile(path.join(index_1.__root_SourceTreePortable, 'Other/Source/PortableApps.comInstallerCustom.nsh'), _nsh_context);
+    //	console.dir(_ini);
+})();
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidXBkYXRlLWNvbmZpZy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbInVwZGF0ZS1jb25maWcudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IjtBQUFBOztHQUVHOztBQUVILCtCQUFnQztBQUNoQyw2QkFBOEI7QUFDOUIsK0NBQWdEO0FBQ2hELG9DQUFvRjtBQUNwRiwrQ0FBdUM7QUFDdkMsMkJBQTRCO0FBRTVCLENBQUMsS0FBSyxJQUFJLEVBQUU7SUFFWCxNQUFNLE9BQU8sR0FBRyxXQUFXLENBQUMsTUFBTSxDQUFDLE9BQU8sQ0FBQztJQUUzQyxJQUFJLEtBQUssR0FBRyxJQUFJLENBQUMsSUFBSSxDQUFDLGlDQUF5QixFQUFFLEtBQUssRUFBRSxTQUFTLEVBQUUsYUFBYSxDQUFDLENBQUM7SUFFbEYsSUFBSSxJQUFJLEdBS0osTUFBTSxFQUFFLENBQUMsUUFBUSxDQUFDLEtBQUssRUFBRSxPQUFPLENBQUMsQ0FBQyxJQUFJLENBQUMsR0FBRyxDQUFDLEtBQUssQ0FBQyxDQUFDO0lBRXRELElBQUksQ0FBQyxPQUFPLENBQUMsY0FBYyxHQUFHLE9BQU8sQ0FBQztJQUN0QyxJQUFJLENBQUMsT0FBTyxDQUFDLGNBQWMsR0FBRyxPQUFPLENBQUMsS0FBSyxDQUFDLEdBQUcsQ0FBQyxDQUFDLEtBQUssQ0FBQyxDQUFDLEVBQUUsQ0FBQyxDQUFDLENBQUMsSUFBSSxDQUFDLEdBQUcsQ0FBQyxDQUFDO0lBRXZFLGFBQWE7SUFDYixzQkFBTyxDQUFDLEdBQUcsQ0FBQyxJQUFJLENBQUMsT0FBTyxDQUFDLENBQUM7SUFFMUIsTUFBTSxFQUFFLENBQUMsU0FBUyxDQUFDLEtBQUssRUFBRSxHQUFHLENBQUMsU0FBUyxDQUFDLElBQUksQ0FBQyxDQUFDLENBQUM7SUFFL0MsSUFBSSxZQUFZLEdBQUc7Ozs7Ozs7Ozs7MFFBVXNQLElBQUksQ0FBQyxPQUFPLENBQUMsY0FBYyw0Q0FBNEMsSUFBSSxDQUFDLE9BQU8sQ0FBQyxjQUFjOzs7a0ZBRzFSLElBQUksQ0FBQyxPQUFPLENBQUMsY0FBYyxxQkFBcUIsSUFBSSxDQUFDLE9BQU8sQ0FBQyxjQUFjOzZFQUNoRixJQUFJLENBQUMsT0FBTyxDQUFDLGNBQWM7Ozs7Ozs7O0NBUXZHLENBQUM7SUFFRCxNQUFNLEVBQUUsQ0FBQyxTQUFTLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxpQ0FBeUIsRUFBRSxrREFBa0QsQ0FBQyxFQUFFLFlBQVksQ0FBQyxDQUFDO0lBRTVILHFCQUFxQjtBQUVyQixDQUFDLENBQUMsRUFBRSxDQUFDIiwic291cmNlc0NvbnRlbnQiOlsiLyoqXG4gKiBDcmVhdGVkIGJ5IHVzZXIgb24gMjAxOS80LzEyLlxuICovXG5cbmltcG9ydCBmcyA9IHJlcXVpcmUoJ2ZzLWV4dHJhJyk7XG5pbXBvcnQgcGF0aCA9IHJlcXVpcmUoJ3BhdGgnKTtcbmltcG9ydCBwYWNrYWdlSnNvbiA9IHJlcXVpcmUoJy4uL3BhY2thZ2UuanNvbicpO1xuaW1wb3J0IHsgX19yZWxlYXNlc19Tb3VyY2VUcmVlUG9ydGFibGUsIF9fcm9vdF9Tb3VyY2VUcmVlUG9ydGFibGUgfSBmcm9tICcuLi9pbmRleCc7XG5pbXBvcnQgeyBjb25zb2xlIH0gZnJvbSAnZGVidWctY29sb3IyJztcbmltcG9ydCBpbmkgPSByZXF1aXJlKCdpbmknKTtcblxuKGFzeW5jICgpID0+XG57XG5cdGNvbnN0IHZlcnNpb24gPSBwYWNrYWdlSnNvbi5jb25maWcudmVyc2lvbjtcblxuXHRsZXQgX3BhdGggPSBwYXRoLmpvaW4oX19yb290X1NvdXJjZVRyZWVQb3J0YWJsZSwgJ0FwcCcsICdBcHBJbmZvJywgJ2FwcGluZm8uaW5pJyk7XG5cblx0bGV0IF9pbmk6IHtcblx0XHRWZXJzaW9uOiB7XG5cdFx0XHRQYWNrYWdlVmVyc2lvbjogc3RyaW5nLFxuXHRcdFx0RGlzcGxheVZlcnNpb246IHN0cmluZyxcblx0XHR9XG5cdH0gPSBhd2FpdCBmcy5yZWFkRmlsZShfcGF0aCwgJ3V0Zi04JykudGhlbihpbmkucGFyc2UpO1xuXG5cdF9pbmkuVmVyc2lvbi5QYWNrYWdlVmVyc2lvbiA9IHZlcnNpb247XG5cdF9pbmkuVmVyc2lvbi5EaXNwbGF5VmVyc2lvbiA9IHZlcnNpb24uc3BsaXQoJy4nKS5zbGljZSgwLCAzKS5qb2luKCcuJyk7XG5cblx0Ly8gQHRzLWlnbm9yZVxuXHRjb25zb2xlLmRpcihfaW5pLlZlcnNpb24pO1xuXG5cdGF3YWl0IGZzLndyaXRlRmlsZShfcGF0aCwgaW5pLnN0cmluZ2lmeShfaW5pKSk7XG5cblx0bGV0IF9uc2hfY29udGV4dCA9IGBcbiFtYWNybyBDdXN0b21Db2RlUG9zdEluc3RhbGxcblxuOyBQcmVwYXJlIGZvbGRlciB0byBleHRyYWN0IHdpdGggN3ppcFxuQ3JlYXRlRGlyZWN0b3J5IFwiJElOU1RESVJcXFxcN3pUZW1wXCJcblNldE91dFBhdGggXCIkSU5TVERJUlxcXFw3elRlbXBcIlxuRmlsZSBcIlxcJHtOU0lTRElSfVxcXFwuLlxcXFw3emlwXFxcXDd6LmV4ZVwiXG5GaWxlIFwiXFwke05TSVNESVJ9XFxcXC4uXFxcXDd6aXBcXFxcN3ouZGxsXCJcblNldE91dFBhdGggJElOU1RESVJcblxuaW5ldGM6OmdldCAvQ09OTkVDVFRJTUVPVVQgMzAgL05PQ09PS0lFUyAvVFJBTlNMQVRFIFwiRG93bmxvYWRpbmcgU291cmNlVHJlZS4uLlwiIFwiQ29ubmVjdGluZy4uLlwiIHNlY29uZCBtaW51dGUgaG91ciBzIFwiJWRrQiAoJWQlJSkgb2YgJWRrQiBAICVkLiUwMWRrQi9zXCIgXCIgKCVkICVzJXMgcmVtYWluaW5nKVwiIFwiaHR0cHM6Ly9wcm9kdWN0LWRvd25sb2Fkcy5hdGxhc3NpYW4uY29tL3NvZnR3YXJlL3NvdXJjZXRyZWUvd2luZG93cy9nYS9Tb3VyY2VUcmVlU2V0dXAtJHtfaW5pLlZlcnNpb24uRGlzcGxheVZlcnNpb259LmV4ZVwiIFwiJElOU1RESVJcXFxcN3pUZW1wXFxcXFNvdXJjZVRyZWVTZXR1cC0ke19pbmkuVmVyc2lvbi5EaXNwbGF5VmVyc2lvbn0uZXhlXCIgL0VORFxuXG47IEV4dHJhY3RcbkV4ZWNET1M6OmV4ZWMgXFxgXCIkSU5TVERJUlxcXFw3elRlbXBcXFxcN3ouZXhlXCIgZSBcIiRJTlNURElSXFxcXDd6VGVtcFxcXFxTb3VyY2VUcmVlU2V0dXAtJHtfaW5pLlZlcnNpb24uRGlzcGxheVZlcnNpb259LmV4ZVwiIFwiU291cmNlVHJlZS0ke19pbmkuVmVyc2lvbi5EaXNwbGF5VmVyc2lvbn0tZnVsbC5udXBrZ1wiIC1vXCIkSU5TVERJUlxcXFw3elRlbXBcIlxcYCBcIlwiIFwiXCJcbkV4ZWNET1M6OmV4ZWMgXFxgXCIkSU5TVERJUlxcXFw3elRlbXBcXFxcN3ouZXhlXCIgeCBcIiRJTlNURElSXFxcXDd6VGVtcFxcXFxTb3VyY2VUcmVlLSR7X2luaS5WZXJzaW9uLkRpc3BsYXlWZXJzaW9ufS1mdWxsLm51cGtnXCIgXCJsaWJcXFxcbmV0NDVcIiAtb1wiJElOU1RESVJcXFxcN3pUZW1wXCJcXGAgXCJcIiBcIlwiXG5FeGVjRE9TOjpleGVjIFxcYHhjb3B5IFwiJElOU1RESVJcXFxcN3pUZW1wXFxcXGxpYlxcXFxuZXQ0NVwiIFwiJElOU1RESVJcXFxcQXBwXFxcXFNvdXJjZVRyZWVcIiAvUyAvaVxcYCBcIlwiIFwiXCJcblxuOyBDbGVhbnVwXG5STURpciAvciBcIiRJTlNURElSXFxcXDd6VGVtcFwiXG5cbiFtYWNyb2VuZFxuXG5gO1xuXG5cdGF3YWl0IGZzLndyaXRlRmlsZShwYXRoLmpvaW4oX19yb290X1NvdXJjZVRyZWVQb3J0YWJsZSwgJ090aGVyL1NvdXJjZS9Qb3J0YWJsZUFwcHMuY29tSW5zdGFsbGVyQ3VzdG9tLm5zaCcpLCBfbnNoX2NvbnRleHQpO1xuXG4vL1x0Y29uc29sZS5kaXIoX2luaSk7XG5cbn0pKCk7XG4iXX0=
