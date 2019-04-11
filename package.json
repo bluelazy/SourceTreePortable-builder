@@ -1,0 +1,15 @@
+{
+  "name": "sourcetree-portable",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "main": "index.js",
+  "scripts": {
+    "subtree-add": "git subtree add --prefix=SourceTreePortable SourceTreePortable master",
+    "subtree-pull": "git subtree pull --prefix=SourceTreePortable SourceTreePortable master",
+    "subtree-push": "git subtree push --prefix=SourceTreePortable SourceTreePortable master",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
